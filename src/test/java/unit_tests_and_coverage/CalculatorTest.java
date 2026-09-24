@@ -1,27 +1,43 @@
-package sefop.unit_tests;
+package unit_tests_and_coverage;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
 /**
- * Worked example: unit tests for {@link Calculator#add(double, double)}.
+ * Unit tests for {@link Calculator}.
  *
- * <p>Read this class before writing {@code CalculatorDivideTest}. It shows the patterns the exercise
- * expects: one behaviour per test, the Arrange / Act / Assert layout, parameterized tests for properties
- * that must hold for many inputs, and assertions on the exceptions that form part of the contract.
+ * <p>Java convention is one test class per production class: {@code Calculator} is tested by
+ * {@code CalculatorTest}, and every method of {@code Calculator} gets its tests here. You don't create a
+ * new class for each method you test.
+ *
+ * <p>The class has two parts:
+ * <ul>
+ *   <li>The tests for {@code add} are a finished worked example. They show the patterns the exercise
+ *       expects: one behavior per test, the Arrange / Act / Assert layout, parameterized tests for
+ *       properties that must hold for many inputs, and assertions on the exceptions that form part of
+ *       the contract.</li>
+ *   <li>The tests for {@code divide} are the exercise. Each stub names one promise from the Javadoc of
+ *       divide. Write its body following the {@code add} examples, then delete its {@code @Disabled} line
+ *       so JUnit runs it.</li>
+ * </ul>
  *
  * <p>Test names follow {@code method_givenCondition_expectedOutcome}, so a failing test reports in plain
  * words which promise was broken.
  */
-class CalculatorAddTest {
+class CalculatorTest {
 
-    /** Relative tolerance used when comparing doubles, matching the contract in the Javadoc of add. */
+    /** Relative tolerance used when comparing doubles, matching the contract in the Javadoc of Calculator. */
     private static final double RELATIVE_TOLERANCE = 1e-8;
+
+    // =====================================================================================================
+    // add: worked example. Read these tests before writing the divide tests below.
+    // =====================================================================================================
 
     @Test
     void add_givenTwoNumbers_returnsTheirSum() {
@@ -108,5 +124,67 @@ class CalculatorAddTest {
 
         // Act / Assert
         assertThrows(ArithmeticException.class, () -> calc.add(Double.MAX_VALUE, Double.MAX_VALUE));
+    }
+
+    // =====================================================================================================
+    // divide: your exercise. Fill in each test, then delete its @Disabled line.
+    //
+    // The stubs are disabled rather than left empty on purpose: an empty test passes, and a passing test
+    // that checks nothing gives false confidence. Disabled tests show up as "skipped" in the report, which
+    // is an honest account of the work still to do.
+    // =====================================================================================================
+
+    @Test
+    @Disabled("Exercise: implement me")
+    void divide_givenTwoValidNumbers_returnsTheirQuotient() {
+        // Arrange
+
+        // Act
+
+        // Assert
+    }
+
+    @Test
+    @Disabled("Exercise: implement me")
+    void divide_givenDividendAndOne_returnsDividend() {
+        // Arrange
+
+        // Act
+
+        // Assert
+    }
+
+    @Test
+    @Disabled("Exercise: implement me")
+    void divide_givenSameNumbers_returnsOne() {
+        // Arrange
+
+        // Act
+
+        // Assert
+    }
+
+    @Test
+    @Disabled("Exercise: implement me")
+    void divide_givenNonFiniteOperand_throwsIllegalArgumentException() {
+        // Arrange
+
+        // Act / Assert
+    }
+
+    @Test
+    @Disabled("Exercise: implement me")
+    void divide_givenZeroDivisor_throwsArithmeticException() {
+        // Arrange
+
+        // Act / Assert
+    }
+
+    @Test
+    @Disabled("Exercise: implement me")
+    void divide_givenInputsThatOverflow_throwsArithmeticException() {
+        // Arrange
+
+        // Act / Assert
     }
 }

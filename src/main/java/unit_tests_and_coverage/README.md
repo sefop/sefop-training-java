@@ -7,10 +7,12 @@ This page only covers what's specific to Java.
 ## The task
 
 - [`Calculator.java`](Calculator.java) is the code under test.
-- [`CalculatorAddTest.java`](../../../../test/java/sefop/unit_tests/CalculatorAddTest.java) is a finished worked example. Read it first.
-- [`CalculatorDivideTest.java`](../../../../test/java/sefop/unit_tests/CalculatorDivideTest.java) is yours. It holds six empty tests, each marked `@Disabled`.
+- [`CalculatorTest.java`](../../../test/java/unit_tests_and_coverage/CalculatorTest.java) holds all the tests for
+  `Calculator`, in two parts:
+  - the `add` tests are a finished worked example. Read them first.
+  - the `divide` tests are yours: six empty tests, each marked `@Disabled`.
 
-For each test in `CalculatorDivideTest`:
+For each `divide` test in `CalculatorTest`:
 
 1. Write the body using the Arrange / Act / Assert layout from the `add` tests.
 2. Delete the `@Disabled("Exercise: implement me")` line so JUnit runs the test.
@@ -19,25 +21,9 @@ For each test in `CalculatorDivideTest`:
 
 When you're done, every test should pass, `Skipped` should be 0, and `divide` should be fully covered.
 
-## Differences from the Python version
-
-The Python exercise has tests for wrong operand *types* (a string or a boolean) and for integers being
-turned into floats. Java doesn't need them: `divide` takes `double` parameters, so the compiler rejects
-`calc.divide("1", 2.0)` before the code ever runs, and it converts an `int` to a `double` automatically.
-Static typing removes a whole category of tests.
-
-The exceptions differ too:
-
-| Situation | Python | Java |
-|---|---|---|
-| Operand is NaN or infinite | `ValueError` | `IllegalArgumentException` |
-| Divisor is zero | `ZeroDivisionError` | `ArithmeticException` |
-| Result overflows | `OverflowError` | `ArithmeticException` |
-
 ## JUnit 5 in five minutes
 
-[JUnit 5](https://junit.org/junit5/docs/current/user-guide/) is the standard test framework for Java, the
-counterpart of `pytest`.
+[JUnit 5](https://junit.org/junit5/docs/current/user-guide/) is the standard test framework for Java, the counterpart of `pytest`.
 
 | You want to… | JUnit 5 | pytest equivalent |
 |---|---|---|
@@ -65,10 +51,10 @@ From the root of the repository:
 mvnw.cmd test        # Windows (cmd or PowerShell: .\mvnw.cmd test)
 ```
 
-To run only the class you're working on:
+To run only the `divide` tests (the quotes stop the shell from expanding `*`):
 
 ```bash
-./mvnw test -Dtest=CalculatorDivideTest
+./mvnw test -Dtest='CalculatorTest#divide*'
 ```
 
 In IntelliJ IDEA, click the green arrow next to a test class or method.
@@ -76,7 +62,8 @@ In IntelliJ IDEA, click the green arrow next to a test class or method.
 The output ends with a summary like this:
 
 ```
-Tests run: 18, Failures: 0, Errors: 0, Skipped: 6
+[WARNING] Tests run: 18, Failures: 0, Errors: 0, Skipped: 6
+[INFO] BUILD SUCCESS
 ```
 
 `Skipped` counts the tests that still have `@Disabled`. Each input of a parameterized test counts as a
@@ -92,7 +79,7 @@ and branches of `src/main` ran while the tests ran. It's already set up in `pom.
 target/site/jacoco/index.html
 ```
 
-Click through `sefop.unit_tests` → `Calculator` → `Calculator.java` to see the source code coloured:
+Click through `unit_tests_and_coverage` → `Calculator` → `Calculator.java` to see the source code colored:
 
 - **Green:** the line ran during the tests.
 - **Red:** the line never ran. No test covers it.
@@ -104,5 +91,5 @@ tests. The report's `Missed Branches` column is the most useful number here: a l
 side of its `if` has never been tested.
 
 **IntelliJ alternative:** right-click a test class → *More Run/Debug* → *Run with Coverage*. IntelliJ
-colours the editor margin directly. It uses its own coverage engine, so numbers can differ a little from
+colors the editor margin directly. It uses its own coverage engine, so numbers can differ a little from
 JaCoCo's. JaCoCo is the one a CI server would use.

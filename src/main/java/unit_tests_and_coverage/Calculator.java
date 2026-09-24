@@ -1,4 +1,4 @@
-package sefop.unit_tests;
+package unit_tests_and_coverage;
 
 /**
  * Performs arithmetic operations on floating-point numbers.
@@ -35,7 +35,7 @@ public class Calculator {
      */
     public double add(double a, double b) {
         // NaN and ±Infinity are valid double values, so the type system lets them through.
-        // We must reject them explicitly to honour the "finite in, finite out" contract.
+        // We must reject them explicitly to honor the "finite in, finite out" contract.
         if (!Double.isFinite(a)) {
             throw new IllegalArgumentException("a must be finite, got " + a);
         }

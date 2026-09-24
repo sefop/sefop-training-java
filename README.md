@@ -87,7 +87,7 @@ Make sure *File → Project Structure → SDK* points to your JDK 21.
 
 ## Exercises
 
-Each exercise lives in its own folder under `src/main/java/sefop/`, with its tests in the matching folder
-under `src/test/java/sefop/`, and has a README with the Java-specific instructions.
+Each exercise lives in its own folder under `src/main/java/`, with its tests in the matching folder
+under `src/test/java/`, and has a README with the Java-specific instructions.
 
-1. [Unit tests and coverage](src/main/java/sefop/unit_tests/README.md)
+1. [Unit tests and coverage](src/main/java/unit_tests_and_coverage/README.md)
