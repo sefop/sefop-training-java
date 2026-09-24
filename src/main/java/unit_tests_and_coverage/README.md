@@ -1,4 +1,4 @@
-# Exercise 1: unit tests and coverage (Java)
+# Exercise 1: unit tests and coverage
 
 The theory, and the reasoning behind this exercise, are in the training hub:
 [Exercise 1: a calculator](https://github.com/sefop/sefop-training-hub/blob/main/book/05-testing/README.md#exercise-1-a-calculator).
@@ -21,7 +21,12 @@ For each `divide` test in `CalculatorTest`:
 
 When you're done, every test should pass, `Skipped` should be 0, and `divide` should be fully covered.
 
-## JUnit 5 in five minutes
+## The libraries
+
+Two libraries do the work in this exercise. Both are already declared in `pom.xml`, so Maven downloads
+them for you: there's nothing to install.
+
+### JUnit 5: writing and running tests
 
 [JUnit 5](https://junit.org/junit5/docs/current/user-guide/) is the standard test framework for Java, the counterpart of `pytest`.
 
@@ -41,6 +46,13 @@ Two things catch people out:
 - **`assertThrows` takes a lambda.** Write `() -> calc.divide(1.0, 0.0)`, not `calc.divide(1.0, 0.0)`.
   Without the `() ->`, the call runs *before* JUnit gets a chance to catch the exception, and the test crashes
   instead of passing.
+
+### JaCoCo: measuring code coverage
+
+[JaCoCo](https://www.jacoco.org/jacoco/) is the Java counterpart of `pytest-cov`. While the tests run, it
+records which lines and branches of `src/main` were executed, then writes the result as an HTML report.
+You never call JaCoCo yourself: `pom.xml` hooks it into the test run, so **every `mvnw test` also writes a
+coverage report**.
 
 ## Running the tests
 
@@ -69,11 +81,9 @@ The output ends with a summary like this:
 `Skipped` counts the tests that still have `@Disabled`. Each input of a parameterized test counts as a
 separate test, so the total goes up as you add cases.
 
-## Code coverage with JaCoCo
+## Reading the coverage report
 
-[JaCoCo](https://www.jacoco.org/jacoco/) is the Java counterpart of `pytest-cov`. It records which lines
-and branches of `src/main` ran while the tests ran. It's already set up in `pom.xml`, so
-**every `mvnw test` also writes a coverage report**. Open this file in a browser:
+After a test run, open this file in a browser:
 
 ```
 target/site/jacoco/index.html

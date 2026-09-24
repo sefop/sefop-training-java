@@ -1,4 +1,6 @@
-# Testing training (Java)
+# Software Engineering Training in Java
+
+[![License](https://img.shields.io/github/license/sefop/sefop-training-java)](LICENSE)
 
 Hands-on exercises on software engineering, for tailored for scientists. This is the Java sibling of
 [training-testing-python](https://github.com/sefop/training-testing-python). The theory is in the [Book](https://github.com/sefop/sefop-training-hub/tree/main/book/).
