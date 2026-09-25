@@ -4,7 +4,13 @@ The theory, and the reasoning behind this exercise, are in the training hub:
 [Exercise 1: a calculator](https://github.com/sefop/sefop-training-hub/blob/main/book/05-testing/README.md#exercise-1-a-calculator).
 This page only covers what's specific to Java.
 
-## The task
+The exercise has two parts:
+
+- **[Part A](#part-a-test-divide):** write the tests for `divide` until `Calculator` is 100% covered.
+- **[Part B](#part-b-refactor-without-touching-the-tests):** change how `Calculator` works inside, without
+  changing what it promises, and see that the tests don't need to change.
+
+## Part A: test `divide`
 
 - [`Calculator.java`](Calculator.java) is the code under test.
 - [`CalculatorTest.java`](../../../test/java/unit_tests_and_coverage/CalculatorTest.java) holds all the tests for
@@ -103,3 +109,68 @@ side of its `if` has never been tested.
 **IntelliJ alternative:** right-click a test class → *More Run/Debug* → *Run with Coverage*. IntelliJ
 colors the editor margin directly. It uses its own coverage engine, so numbers can differ a little from
 JaCoCo's. JaCoCo is the one a CI server would use.
+
+## Part B: refactor without touching the tests
+
+### Why
+
+`Calculator` has two sides. The Javadoc of each method is its **contract**, or interface: what it
+accepts, what it returns, and which exceptions it throws. The method bodies are **implementation details**:
+one way, among many, of keeping that promise. Good tests check the contract only. So if you change the
+implementation and keep the contract, the tests must stay green **without being edited**. That's what makes
+it safe to clean up code: the tests tell you straight away whether you broke a promise.
+
+### Before you start
+
+Finish Part A first: no `@Disabled` left and `divide` fully covered. A test that is still disabled protects
+nothing, so a refactor could break `divide` without any warning.
+
+### Steps
+
+1. **Run the tests** and write down the summary line (`Tests run: …`) and the coverage of `Calculator`.
+
+2. **Refactor.** `add` and `divide` both start with the same few lines that reject NaN and infinite operands.
+   Move that duplicated validation into **one private helper method** that both `add` and `divide` call.
+   Don't open `CalculatorTest.java` while you do it.
+
+   <details>
+   <summary>Hint</summary>
+
+   A signature that works well:
+
+   ```java
+   private static void requireFinite(double value, String name)
+   ```
+
+   It throws the same `IllegalArgumentException` as before when `value` is NaN or infinite, using `name` in
+   the message. `add` and `divide` then call it once per operand: `requireFinite(a, "a")` and
+   `requireFinite(b, "b")`. It can be `static` because it uses no field of `Calculator`.
+
+   </details>
+
+3. **Run the tests again.** You should see the same summary as in step 1, with every test green and
+   `Calculator` still 100% covered. Run `git status`: `Calculator.java` is modified and `CalculatorTest.java`
+   isn't. The implementation changed, the contract didn't, and the tests didn't notice. That's the point.
+
+   Don't add a test for `requireFinite`. It's an implementation detail, not part of the contract. It already
+   runs through the tests of `add` and `divide`, and the coverage report proves it: still 100% without any
+   new test. A test that called the helper directly would break the day someone renames it or inlines it
+   back, even though no promise changed. (`private` also stops you: the test class can't call it.)
+
+4. **Break the contract on purpose.** In the helper, throw an `ArithmeticException` instead of an
+   `IllegalArgumentException`, then run the tests. The non-finite tests of `add` fail, and so does yours
+   for `divide`. This time the tests are right to complain: the exception type is written in the Javadoc,
+   so it's part of the contract. Also notice that one change in one shared place broke two methods.
+   **Undo the change** and check that everything is green again.
+
+5. **Optional challenge.** In `divide`, call the helper for `a` only and remove the call for `b`. Run the
+   tests. Did anything fail? If not, your Part A tests never tried a NaN or infinite *divisor*. The promise
+   is broken and nobody noticed. Add that case to your test, watch it fail, then put the call back.
+   Asking "would my tests catch this bug?" is exactly what exercise 3 (mutation testing) automates.
+
+### What you learned
+
+- Tests pin down the contract, not the code. The implementation is free to change underneath them.
+- That's what makes refactoring safe: the same tests, still green, are your evidence that no promise broke.
+- A test that goes red after a contract change is doing its job. The fix is in the code, or, if the new
+  behavior is intended, in the contract and its tests together.
