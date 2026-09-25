@@ -1,6 +1,7 @@
 package unit_tests_and_coverage;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import org.junit.jupiter.api.Disabled;
@@ -42,10 +43,10 @@ class CalculatorTest {
     @Test
     void add_givenTwoNumbers_returnsTheirSum() {
         // Arrange
-        Calculator calc = new Calculator();
+        Calculator calculator = new Calculator();
 
         // Act
-        double result = calc.add(1.0, 2.0);
+        double result = calculator.add(1.0, 2.0);
 
         // Assert
         // Doubles are compared with a tolerance, never with exact equality, because most decimal
@@ -64,10 +65,10 @@ class CalculatorTest {
         // is exactly representable, so any difference would be a real bug.
 
         // Arrange
-        Calculator calc = new Calculator();
+        Calculator calculator = new Calculator();
 
         // Act
-        double result = calc.add(x, 0.0);
+        double result = calculator.add(x, 0.0);
 
         // Assert
         assertEquals(x, result, Math.abs(x) * RELATIVE_TOLERANCE);
@@ -85,11 +86,13 @@ class CalculatorTest {
         // with a non-commutative algorithm, this test would catch the regression.
 
         // Arrange
-        Calculator calc = new Calculator();
+        Calculator calculator = new Calculator();
 
         // Act
-        double forward = calc.add(a, b);
-        double backward = calc.add(b, a);
+        // The one place where Act calls the unit twice: commutativity is a relation between two calls,
+        // so a single call has nothing to compare against.
+        double forward = calculator.add(a, b);
+        double backward = calculator.add(b, a);
 
         // Assert
         assertEquals(forward, backward, Math.abs(forward) * RELATIVE_TOLERANCE);
@@ -105,12 +108,17 @@ class CalculatorTest {
         // so the special IEEE 754 values can be listed next to ordinary numbers.
 
         // Arrange
-        Calculator calc = new Calculator();
+        Calculator calculator = new Calculator();
 
-        // Act / Assert
-        // assertThrows runs the lambda and fails the test unless it throws the given exception type.
-        // The lambda delays the call so that JUnit, not the test itself, catches the exception.
-        assertThrows(IllegalArgumentException.class, () -> calc.add(a, b));
+        // Act
+        // A call that throws never returns a result, so we capture the exception instead. assertThrows runs
+        // the lambda and hands back whatever it threw. Asking for Throwable, the parent of every exception,
+        // means Act only records what happened; checking WHICH exception it was is left to Assert.
+        // The lambda (() -> ...) delays the call so that JUnit, not the test itself, catches the exception.
+        Throwable thrown = assertThrows(Throwable.class, () -> calculator.add(a, b));
+
+        // Assert
+        assertInstanceOf(IllegalArgumentException.class, thrown);
     }
 
     @Test
@@ -120,10 +128,13 @@ class CalculatorTest {
         // Double.MAX_VALUE is the largest finite double (~1.8 x 10^308); adding it to itself overflows.
 
         // Arrange
-        Calculator calc = new Calculator();
+        Calculator calculator = new Calculator();
 
-        // Act / Assert
-        assertThrows(ArithmeticException.class, () -> calc.add(Double.MAX_VALUE, Double.MAX_VALUE));
+        // Act
+        Throwable thrown = assertThrows(Throwable.class, () -> calculator.add(Double.MAX_VALUE, Double.MAX_VALUE));
+
+        // Assert
+        assertInstanceOf(ArithmeticException.class, thrown);
     }
 
     // =====================================================================================================
@@ -169,7 +180,9 @@ class CalculatorTest {
     void divide_givenNonFiniteOperand_throwsIllegalArgumentException() {
         // Arrange
 
-        // Act / Assert
+        // Act
+
+        // Assert
     }
 
     @Test
@@ -177,7 +190,9 @@ class CalculatorTest {
     void divide_givenZeroDivisor_throwsArithmeticException() {
         // Arrange
 
-        // Act / Assert
+        // Act
+
+        // Assert
     }
 
     @Test
@@ -185,6 +200,8 @@ class CalculatorTest {
     void divide_givenInputsThatOverflow_throwsArithmeticException() {
         // Arrange
 
-        // Act / Assert
+        // Act
+
+        // Assert
     }
 }

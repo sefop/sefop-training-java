@@ -42,14 +42,26 @@ them for you: there's nothing to install.
 | Run one test with several inputs | `@ParameterizedTest` + `@ValueSource` / `@CsvSource` | `@pytest.mark.parametrize` |
 | Skip a test for now | `@Disabled("reason")` | `@pytest.mark.skip` |
 | Compare doubles | `assertEquals(expected, actual, delta)` | `pytest.approx` |
-| Expect an exception | `assertThrows(SomeException.class, () -> ...)` | `with pytest.raises(...)` |
+| Capture an exception | `Throwable thrown = assertThrows(Throwable.class, () -> ...)` | `with pytest.raises(Exception) as error:` |
+| Check its type | `assertInstanceOf(SomeException.class, thrown)` | `assert isinstance(error.value, SomeError)` |
 
 Two things catch people out:
 
 - **`delta` is absolute.** `assertEquals(3.0, result, 1e-8)` accepts anything within 1e-8 of 3.0, whatever
   the size of the numbers. The worked example uses a *relative* tolerance by scaling the delta:
   `Math.abs(expected) * 1e-8`. That's what `pytest.approx(x, rel=1e-8)` does for you in Python.
-- **`assertThrows` takes a lambda.** Write `() -> calc.divide(1.0, 0.0)`, not `calc.divide(1.0, 0.0)`.
+- **Exception tests keep Arrange, Act and Assert apart too.** A call that throws never returns a result, so
+  Act captures the exception and Assert checks its type:
+
+  ```java
+  // Act
+  Throwable thrown = assertThrows(Throwable.class, () -> calculator.divide(1.0, 0.0));
+
+  // Assert
+  assertInstanceOf(ArithmeticException.class, thrown);
+  ```
+
+  `assertThrows` takes a lambda: write `() -> calculator.divide(1.0, 0.0)`, not `calculator.divide(1.0, 0.0)`.
   Without the `() ->`, the call runs *before* JUnit gets a chance to catch the exception, and the test crashes
   instead of passing.
 
