@@ -39,16 +39,43 @@
             <artifactId>junit-jupiter</artifactId>
             <scope>test</scope>
         </dependency>
+        <!-- Mockito creates mocks: stand-ins for a dependency that record every call they receive, so a
+             test can check the calls (exercise 3). Test scope keeps it out of the production code. -->
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-core</artifactId>
+            <version>5.14.2</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
         <plugins>
             <!-- Surefire is the plugin that runs the tests during `mvnw test`. Maven's default version
                  is old, so we pin a recent one that understands JUnit 5 without extra setup. -->
+            <!-- Exposes the path of each dependency jar as a property, such as
+                 ${org.mockito:mockito-core:jar}, so Surefire can attach Mockito as a Java agent below. -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <version>3.8.1</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>properties</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>${surefire.version}</version>
+                <configuration>
+                    <!-- Attaches Mockito's agent when the test JVM starts, as Mockito recommends on Java 21+,
+                         instead of loading it on the fly with a warning. @{argLine} keeps JaCoCo's agent. -->
+                    <argLine>@{argLine} -javaagent:${org.mockito:mockito-core:jar}</argLine>
+                </configuration>
             </plugin>
 
             <!-- JaCoCo measures code coverage (the Java counterpart of pytest-cov).
