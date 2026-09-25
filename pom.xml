@@ -40,7 +40,7 @@
             <scope>test</scope>
         </dependency>
         <!-- Mockito creates mocks: stand-ins for a dependency that record every call they receive, so a
-             test can check the calls (exercise 3). Test scope keeps it out of the production code. -->
+             test can check the calls (mocks exercise). Test scope keeps it out of the production code. -->
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>

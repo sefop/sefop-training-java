@@ -12,8 +12,8 @@ import org.junit.jupiter.api.Test;
 /**
  * Unit tests for {@link NightlyPlanner}.
  *
- * <p>The behavior of {@code NightlyPlanner} is a call to another system: it pages a person. It returns
- * nothing, so these tests replace the pager with a mock, a stand-in that records every call it receives, and
+ * <p>The behavior of {@code NightlyPlanner} is a call to another system: it notifies a person. It returns
+ * nothing, so these tests replace the notifier with a mock, a stand-in that records every call it receives, and
  * assert on those calls.
  *
  * <p>The class has two parts:
@@ -30,11 +30,11 @@ import org.junit.jupiter.api.Test;
 class NightlyPlannerTest {
 
     /** A mock written by hand: it sends nothing and records every message. */
-    private static class RecordingPager implements Pager {
+    private static class RecordingNotifier implements Notifier {
         final List<String> messages = new ArrayList<>();
 
         @Override
-        public void page(String message) {
+        public void notify(String message) {
             messages.add(message);
         }
     }
@@ -44,49 +44,49 @@ class NightlyPlannerTest {
     // =====================================================================================================
 
     @Test
-    void review_givenAnInfeasiblePlan_pagesOnceWithTheInstance() {
+    void review_givenAnInfeasiblePlan_notifiesOnceWithTheInstance() {
         // Arrange
-        RecordingPager pager = new RecordingPager();
-        NightlyPlanner planner = new NightlyPlanner(pager);
+        RecordingNotifier notifier = new RecordingNotifier();
+        NightlyPlanner planner = new NightlyPlanner(notifier);
         SolveResult result = new SolveResult("2026-09-26", SolveStatus.INFEASIBLE);
 
         // Act
         planner.review(result);
 
         // Assert
-        assertEquals(List.of("Instance 2026-09-26: no feasible plan exists."), pager.messages);
+        assertEquals(List.of("Instance 2026-09-26: no feasible plan exists."), notifier.messages);
     }
 
     @Test
-    void review_givenAFeasiblePlan_sendsNoPage() {
+    void review_givenAFeasiblePlan_sendsNoNotification() {
         // Arrange
-        Pager pager = mock(Pager.class);
-        NightlyPlanner planner = new NightlyPlanner(pager);
+        Notifier notifier = mock(Notifier.class);
+        NightlyPlanner planner = new NightlyPlanner(notifier);
         SolveResult result = new SolveResult("2026-09-26", SolveStatus.FEASIBLE);
 
         // Act
         planner.review(result);
 
         // Assert
-        verifyNoInteractions(pager);
+        verifyNoInteractions(notifier);
     }
 
     // =====================================================================================================
-    // Your tests: use mock(Pager.class), then delete the @Disabled line.
+    // Your tests: use mock(Notifier.class), then delete the @Disabled line.
     // =====================================================================================================
 
     @Test
     @Disabled("Exercise: implement me")
-    void review_givenTheTimeLimitRanOut_pagesOnceWithTheTimeLimitMessage() {
+    void review_givenTheTimeLimitRanOut_notifiesOnceWithTheTimeLimitMessage() {
     }
 
     @Test
     @Disabled("Exercise: implement me")
-    void review_givenAnOptimalPlan_sendsNoPage() {
+    void review_givenAnOptimalPlan_sendsNoNotification() {
     }
 
     @Test
     @Disabled("Exercise: implement me")
-    void review_givenAnotherInstance_namesThatInstanceInThePage() {
+    void review_givenAnotherInstance_namesThatInstanceInTheNotification() {
     }
 }

@@ -6,12 +6,12 @@ package mocks;
  * <p>The real implementation sends an SMS or a chat message to a person. Tests never use it: they pass in a
  * mock that records the calls instead.
  */
-public interface Pager {
+public interface Notifier {
 
     /**
      * Sends {@code message} to the planner on call.
      *
-     * @param message the text of the page.
+     * @param message the text of the notification.
      */
-    void page(String message);
+    void notify(String message);
 }

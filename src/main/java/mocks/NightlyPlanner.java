@@ -1,39 +1,39 @@
 package mocks;
 
 /**
- * Reviews the result of the nightly solve and pages the planner on call when needed.
+ * Reviews the result of the nightly solve and notifies the planner on call when needed.
  *
  * <p>Every night a planning job solves tomorrow's plan. {@code NightlyPlanner} receives the result of that
- * solve and decides whether a person must act before morning. When one must, it pages them through a
- * {@link Pager}.
+ * solve and decides whether a person must act before morning. When one must, it notifies them through a
+ * {@link Notifier}.
  *
  * <p>{@code NightlyPlanner} never calls the solver itself: the solve result arrives as an argument. Its only
- * dependency is the pager, and it receives it from outside (dependency injection), so a test can pass in a
- * mock instead of a real pager.
+ * dependency is the notifier, and it receives it from outside (dependency injection), so a test can pass in a
+ * mock instead of a real notifier.
  */
 public class NightlyPlanner {
 
-    private final Pager pager;
+    private final Notifier notifier;
 
     /**
-     * Creates a planner that pages through the given pager.
+     * Creates a planner that notifies through the given notifier.
      *
-     * @param pager where pages are sent.
+     * @param notifier where notifications are sent.
      */
-    public NightlyPlanner(Pager pager) {
-        this.pager = pager;
+    public NightlyPlanner(Notifier notifier) {
+        this.notifier = notifier;
     }
 
     /**
-     * Pages the planner on call when tomorrow has no plan.
+     * Notifies the planner on call when tomorrow has no plan.
      *
      * <p>Contract:
      * <ul>
-     *   <li>{@code INFEASIBLE}: sends exactly one page, {@code "Instance <instanceId>: no feasible plan
+     *   <li>{@code INFEASIBLE}: sends exactly one notification, {@code "Instance <instanceId>: no feasible plan
      *       exists."}</li>
-     *   <li>{@code TIME_LIMIT_NO_SOLUTION}: sends exactly one page, {@code "Instance <instanceId>: no plan
+     *   <li>{@code TIME_LIMIT_NO_SOLUTION}: sends exactly one notification, {@code "Instance <instanceId>: no plan
      *       found within the time limit."}</li>
-     *   <li>{@code OPTIMAL} or {@code FEASIBLE}: sends no page. A plan exists, so nobody needs to be woken
+     *   <li>{@code OPTIMAL} or {@code FEASIBLE}: sends no notification. A plan exists, so nobody needs to be woken
      *       up.</li>
      * </ul>
      *
@@ -42,9 +42,9 @@ public class NightlyPlanner {
     public void review(SolveResult result) {
         switch (result.status()) {
             case INFEASIBLE ->
-                    pager.page("Instance " + result.instanceId() + ": no feasible plan exists.");
+                    notifier.notify("Instance " + result.instanceId() + ": no feasible plan exists.");
             case TIME_LIMIT_NO_SOLUTION ->
-                    pager.page("Instance " + result.instanceId() + ": no plan found within the time limit.");
+                    notifier.notify("Instance " + result.instanceId() + ": no plan found within the time limit.");
             case OPTIMAL, FEASIBLE -> {
                 // A plan exists: nothing to do.
             }

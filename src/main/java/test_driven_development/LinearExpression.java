@@ -14,7 +14,7 @@ package test_driven_development;
  *   <li>{@code -1 - x + 2y}: scalar -1.0, coefficient -1.0 for "x", coefficient 2.0 for "y".</li>
  * </ul>
  *
- * <p><b>Exercise 2: test-driven development.</b> See README.md in this folder for the instructions. The
+ * <p><b>Test-driven development exercise.</b> See README.md in this folder for the instructions. The
  * scalar part is already built, test-first, exactly as in the book's worked example. Everything about
  * variables is yours to build, one red-green-refactor cycle at a time. For the new methods, names,
  * parameters and internal design are up to you: only the observable behavior described below is required.
