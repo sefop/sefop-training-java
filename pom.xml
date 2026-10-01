@@ -47,6 +47,14 @@
             <version>5.14.2</version>
             <scope>test</scope>
         </dependency>
+        <!-- OR-Tools is Google's open-source optimization library. The oracles exercise solves the cargo
+             model with it, through its bundled SCIP solver. It ships its native libraries for Windows,
+             macOS and Linux inside the jar, so there is nothing else to install. -->
+        <dependency>
+            <groupId>com.google.ortools</groupId>
+            <artifactId>ortools-java</artifactId>
+            <version>9.15.6755</version>
+        </dependency>
     </dependencies>
 
     <build>

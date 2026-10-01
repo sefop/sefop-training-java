@@ -1,0 +1,30 @@
+name: CI
+
+# Triggered on both push and pull_request so that:
+#   - push:         catches regressions on every branch, including solutions
+#   - pull_request: runs again at merge time to catch conflicts introduced by other branches
+on:
+  push:
+  pull_request:
+    branches: [main]
+
+# contents:read is the minimum needed to check out the repo.
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # Pins Java 21 to match the README. cache: maven reuses downloaded libraries between runs.
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+
+      - name: Run tests
+        run: ./mvnw -B test

@@ -72,11 +72,11 @@ cd sefop-training-java
 The first run takes a minute or two while Maven and the libraries download. It should end with something like:
 
 ```
-[WARNING] Tests run: 30, Failures: 0, Errors: 0, Skipped: 12
+[WARNING] Tests run: 58, Failures: 0, Errors: 0, Skipped: 38
 [INFO] BUILD SUCCESS
 ```
 
-The 12 skipped tests are the ones you'll write in the exercises. Maven prints `[WARNING]` only because some
+The 38 skipped tests are the ones you'll write, or enable, in the exercises. Maven prints `[WARNING]` only because some
 tests are skipped. `BUILD SUCCESS` is what matters. The run also writes a code coverage report to
 `target/site/jacoco/index.html`.
 
@@ -96,3 +96,7 @@ under `src/test/java/`, and has a README with the Java-specific instructions.
 - [Test-driven development](src/main/java/test_driven_development/README.md)
 - [Mocks](src/main/java/mocks/README.md)
 - [Integration testing](src/main/java/integration_testing/README.md)
+- [Test oracles](src/main/java/oracles/README.md)
+
+Stuck on the test oracles exercise? The [`solutions`](https://github.com/sefop/sefop-training-java/tree/solutions)
+branch holds its tests finished. Try first: the exercise is in writing them.
