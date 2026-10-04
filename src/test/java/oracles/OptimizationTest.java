@@ -33,8 +33,9 @@ import org.junit.jupiter.api.Test;
  * </ul>
  *
  * <p>Test names follow {@code method_givenCondition_expectedOutcome}, so a failing test reports in plain words
- * which promise was broken. Revenues and totals are compared with a tolerance, {@code DELTA}, because the model
- * computes with floating-point numbers.
+ * which promise was broken. {@code run} returns a {@link Result}: check its status, then read the load from
+ * {@code result.solution()}. Revenues and totals are compared with a tolerance, {@code DELTA}, because the
+ * model computes with floating-point numbers.
  */
 class OptimizationTest {
 
@@ -74,11 +75,11 @@ class OptimizationTest {
         Instance instance = new Instance(List.of(a, b), 2, 2);
 
         // Act
-        Solution solution = new Optimization().run(instance);
+        Result result = new Optimization().run(instance);
 
         // Assert
-        assertNotNull(solution);
-        assertEquals(10, solution.objectiveValue(), DELTA);
+        assertEquals(Status.OPTIMAL, result.status());
+        assertEquals(10, result.solution().objectiveValue(), DELTA);
     }
 
     /** Pseudo-oracle: on 200 small random instances, run and EnumerationSolver agree. */
@@ -98,13 +99,14 @@ class OptimizationTest {
             Instance instance = new Instance(products, rng.nextInt(0, 9), rng.nextInt(0, 9));
 
             // Act
-            Solution reference = new EnumerationSolver().run(instance);
-            Solution candidate = new Optimization().run(instance);
+            Result reference = new EnumerationSolver().run(instance);
+            Result candidate = new Optimization().run(instance);
 
             // Assert
-            assertEquals(reference == null, candidate == null, "feasibility differs on " + instance);
-            if (reference != null) {
-                assertEquals(reference.objectiveValue(), candidate.objectiveValue(), DELTA, "on " + instance);
+            assertEquals(reference.status(), candidate.status(), "status differs on " + instance);
+            if (reference.status() == Status.OPTIMAL) {
+                assertEquals(reference.solution().objectiveValue(), candidate.solution().objectiveValue(), DELTA,
+                        "on " + instance);
             }
         }
     }
@@ -117,18 +119,20 @@ class OptimizationTest {
         Instance afterInstance = threeProducts(8, 4, 0);
 
         // Act
-        Solution before = new Optimization().run(beforeInstance);
-        Solution after = new Optimization().run(afterInstance);
+        Result before = new Optimization().run(beforeInstance);
+        Result after = new Optimization().run(afterInstance);
 
-        // Assert
-        assertTrue(after.objectiveValue() >= before.objectiveValue());
+        // Assert: the relation is a promise of the status OPTIMAL, so check the status first.
+        assertEquals(Status.OPTIMAL, before.status());
+        assertEquals(Status.OPTIMAL, after.status());
+        assertTrue(after.solution().objectiveValue() >= before.solution().objectiveValue());
     }
 
     // =====================================================================================================
     // Part 1: one test per promise, and the helper above. Write the body, then delete the @Disabled line.
     // =====================================================================================================
 
-    /** Behavior 1, valid solution. Oracle: the constraint definition (assertValidSolution). */
+    /** Behavior 1, valid result.solution(). Oracle: the constraint definition (assertValidSolution). */
     @Test
     @Disabled("Exercise: implement me")
     void run_givenAFeasibleInstance_returnsAValidSolution() {
@@ -137,7 +141,7 @@ class OptimizationTest {
     /** Behavior 2, no solution from an empty feasible set. Oracle: known (one sum). */
     @Test
     @Disabled("Exercise: implement me")
-    void run_givenCommittedPalletsHeavierThanThePayload_returnsNull() {
+    void run_givenCommittedPalletsHeavierThanThePayload_returnsInfeasible() {
     }
 
     /** Behavior 3, existence &amp; optimality, on a boundary. Oracle: known. */
@@ -183,7 +187,7 @@ class OptimizationTest {
     /** Behavior 2. Oracle: known (one sum). */
     @Test
     @Disabled("Exercise: implement me")
-    void run_givenCommittedPalletsBulkierThanTheHold_returnsNull() {
+    void run_givenCommittedPalletsBulkierThanTheHold_returnsInfeasible() {
     }
 
     /** Behavior 3. Oracle: known. */

@@ -3,7 +3,7 @@ package oracles;
 import java.util.Map;
 
 /**
- * The load that {@link Optimization#run(Instance)} found.
+ * A load.
  *
  * @param picked         product name to whole number of pallets, 0 when the product is left behind.
  * @param objectiveValue the revenue of the load.
