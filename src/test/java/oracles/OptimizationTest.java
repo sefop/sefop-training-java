@@ -31,8 +31,9 @@ import org.junit.jupiter.api.Test;
  * </ul>
  *
  * <p>Test names follow {@code method_givenCondition_expectedOutcome}, so a failing test reports in plain words
- * which promise was broken. Revenues and totals are compared with a tolerance, {@code DELTA}, because the model
- * computes with floating-point numbers.
+ * which promise was broken. {@code run} returns a {@link Result}: check its status, then read the load from
+ * {@code result.solution()}. Revenues and totals are compared with a tolerance, {@code DELTA}, because the
+ * model computes with floating-point numbers.
  */
 class OptimizationTest {
 
@@ -86,11 +87,11 @@ class OptimizationTest {
         Instance instance = new Instance(List.of(a, b), 2, 2);
 
         // Act
-        Solution solution = new Optimization().run(instance);
+        Result result = new Optimization().run(instance);
 
         // Assert
-        assertNotNull(solution);
-        assertEquals(10, solution.objectiveValue(), DELTA);
+        assertEquals(Status.OPTIMAL, result.status());
+        assertEquals(10, result.solution().objectiveValue(), DELTA);
     }
 
     /** Pseudo-oracle: on 200 small random instances, run and EnumerationSolver agree. */
@@ -109,13 +110,14 @@ class OptimizationTest {
             Instance instance = new Instance(products, rng.nextInt(0, 9), rng.nextInt(0, 9));
 
             // Act
-            Solution reference = new EnumerationSolver().run(instance);
-            Solution candidate = new Optimization().run(instance);
+            Result reference = new EnumerationSolver().run(instance);
+            Result candidate = new Optimization().run(instance);
 
             // Assert
-            assertEquals(reference == null, candidate == null, "feasibility differs on " + instance);
-            if (reference != null) {
-                assertEquals(reference.objectiveValue(), candidate.objectiveValue(), DELTA, "on " + instance);
+            assertEquals(reference.status(), candidate.status(), "status differs on " + instance);
+            if (reference.status() == Status.OPTIMAL) {
+                assertEquals(reference.solution().objectiveValue(), candidate.solution().objectiveValue(), DELTA,
+                        "on " + instance);
             }
         }
     }
@@ -128,43 +130,46 @@ class OptimizationTest {
         Instance afterInstance = threeProducts(8, 4, 0);
 
         // Act
-        Solution before = new Optimization().run(beforeInstance);
-        Solution after = new Optimization().run(afterInstance);
+        Result before = new Optimization().run(beforeInstance);
+        Result after = new Optimization().run(afterInstance);
 
-        // Assert
-        assertTrue(after.objectiveValue() >= before.objectiveValue());
+        // Assert: the relation is a promise of the status OPTIMAL, so check the status first.
+        assertEquals(Status.OPTIMAL, before.status());
+        assertEquals(Status.OPTIMAL, after.status());
+        assertTrue(after.solution().objectiveValue() >= before.solution().objectiveValue());
     }
 
     // =====================================================================================================
     // Part 1: one test per promise.
     // =====================================================================================================
 
-    /** Behavior 1, valid solution. Oracle: the constraint definition (assertValidSolution). */
+    /** Behavior 1, valid result.solution(). Oracle: the constraint definition (assertValidSolution). */
     @Test
     void run_givenAFeasibleInstance_returnsAValidSolution() {
         // Arrange
         Instance instance = threeProducts(8, 4, 1);
 
         // Act
-        Solution solution = new Optimization().run(instance);
+        Result result = new Optimization().run(instance);
 
         // Assert
-        assertNotNull(solution);
-        assertValidSolution(instance, solution);
+        assertEquals(Status.OPTIMAL, result.status());
+        assertValidSolution(instance, result.solution());
     }
 
     /** Behavior 2, no solution from an empty feasible set. Oracle: known (one sum). */
     @Test
-    void run_givenCommittedPalletsHeavierThanThePayload_returnsNull() {
+    void run_givenCommittedPalletsHeavierThanThePayload_returnsInfeasible() {
         // Arrange: two committed pallets of one tonne each, and the aircraft may carry one tonne.
         Product mail = new Product("M", 1, 1, 4, 2);
         Instance instance = new Instance(List.of(mail), 1, 5);
 
         // Act
-        Solution solution = new Optimization().run(instance);
+        Result result = new Optimization().run(instance);
 
         // Assert
-        assertNull(solution);
+        assertEquals(Status.INFEASIBLE, result.status());
+        assertNull(result.solution());
     }
 
     /** Behavior 3, existence &amp; optimality, on a boundary. Oracle: known. */
@@ -176,12 +181,12 @@ class OptimizationTest {
         Instance instance = new Instance(List.of(mail, gold), 2, 5);
 
         // Act
-        Solution solution = new Optimization().run(instance);
+        Result result = new Optimization().run(instance);
 
         // Assert
-        assertNotNull(solution);
-        assertEquals(Map.of("M", 2, "G", 0), solution.picked());
-        assertEquals(8, solution.objectiveValue(), DELTA);
+        assertEquals(Status.OPTIMAL, result.status());
+        assertEquals(Map.of("M", 2, "G", 0), result.solution().picked());
+        assertEquals(8, result.solution().objectiveValue(), DELTA);
     }
 
     /** Behavior 4, permutation invariance. Oracle: metamorphic relation. */
@@ -193,11 +198,11 @@ class OptimizationTest {
                 instance.products().reversed(), instance.weightCapacity(), instance.volumeCapacity());
 
         // Act
-        Solution first = new Optimization().run(instance);
-        Solution second = new Optimization().run(reversedInstance);
+        Result first = new Optimization().run(instance);
+        Result second = new Optimization().run(reversedInstance);
 
         // Assert
-        assertEquals(first.objectiveValue(), second.objectiveValue(), DELTA);
+        assertEquals(first.solution().objectiveValue(), second.solution().objectiveValue(), DELTA);
     }
 
     /** Behavior 5, objective changed. Oracle: metamorphic relation. */
@@ -213,11 +218,11 @@ class OptimizationTest {
         Instance scaled = new Instance(scaledProducts, instance.weightCapacity(), instance.volumeCapacity());
 
         // Act
-        Solution first = new Optimization().run(instance);
-        Solution second = new Optimization().run(scaled);
+        Result first = new Optimization().run(instance);
+        Result second = new Optimization().run(scaled);
 
         // Assert
-        assertEquals(k * first.objectiveValue(), second.objectiveValue(), DELTA);
+        assertEquals(k * first.solution().objectiveValue(), second.solution().objectiveValue(), DELTA);
     }
 
     /** Behavior 6, feasible set expanded. Oracle: metamorphic relation. */
@@ -230,11 +235,11 @@ class OptimizationTest {
         Instance extended = new Instance(extendedProducts, instance.weightCapacity(), instance.volumeCapacity());
 
         // Act
-        Solution first = new Optimization().run(instance);
-        Solution second = new Optimization().run(extended);
+        Result first = new Optimization().run(instance);
+        Result second = new Optimization().run(extended);
 
         // Assert
-        assertTrue(second.objectiveValue() >= first.objectiveValue());
+        assertTrue(second.solution().objectiveValue() >= first.solution().objectiveValue());
     }
 
     /** Behavior 7, feasible set reduced, keeping the first load. Oracle: metamorphic relation. */
@@ -242,19 +247,19 @@ class OptimizationTest {
     void run_givenTheFirstRunsPalletsCommitted_earnsTheSameRevenue() {
         // Arrange
         Instance instance = threeProducts();
-        Solution first = new Optimization().run(instance);
+        Result first = new Optimization().run(instance);
         List<Product> committedProducts = new ArrayList<>();
         for (Product p : instance.products()) {
-            committedProducts.add(new Product(p.name(), p.weight(), p.volume(), p.revenue(), first.picked().get(p.name())));
+            committedProducts.add(new Product(p.name(), p.weight(), p.volume(), p.revenue(), first.solution().picked().get(p.name())));
         }
         Instance committed = new Instance(committedProducts, instance.weightCapacity(), instance.volumeCapacity());
 
         // Act
-        Solution second = new Optimization().run(committed);
+        Result second = new Optimization().run(committed);
 
         // Assert
-        assertNotNull(second);
-        assertEquals(first.objectiveValue(), second.objectiveValue(), DELTA);
+        assertEquals(Status.OPTIMAL, second.status());
+        assertEquals(first.solution().objectiveValue(), second.solution().objectiveValue(), DELTA);
     }
 
     /** Checks the pseudo-oracle itself against a known answer before trusting it in the sweep. */
@@ -266,11 +271,11 @@ class OptimizationTest {
         Instance instance = new Instance(List.of(a, b), 2, 2);
 
         // Act
-        Solution solution = new EnumerationSolver().run(instance);
+        Result result = new EnumerationSolver().run(instance);
 
         // Assert
-        assertNotNull(solution);
-        assertEquals(10, solution.objectiveValue(), DELTA);
+        assertEquals(Status.OPTIMAL, result.status());
+        assertEquals(10, result.solution().objectiveValue(), DELTA);
     }
 
     // =====================================================================================================
@@ -279,16 +284,17 @@ class OptimizationTest {
 
     /** Behavior 2. Oracle: known (one sum). */
     @Test
-    void run_givenCommittedPalletsBulkierThanTheHold_returnsNull() {
+    void run_givenCommittedPalletsBulkierThanTheHold_returnsInfeasible() {
         // Arrange: two committed pallets of 3 cubic meters each, and the hold takes 5.
         Product mail = new Product("M", 1, 3, 4, 2);
         Instance instance = new Instance(List.of(mail), 10, 5);
 
         // Act
-        Solution solution = new Optimization().run(instance);
+        Result result = new Optimization().run(instance);
 
         // Assert
-        assertNull(solution);
+        assertEquals(Status.INFEASIBLE, result.status());
+        assertNull(result.solution());
     }
 
     /** Behavior 3. Oracle: known. */
@@ -298,12 +304,12 @@ class OptimizationTest {
         Instance instance = new Instance(List.of(), 5, 4);
 
         // Act
-        Solution solution = new Optimization().run(instance);
+        Result result = new Optimization().run(instance);
 
         // Assert
-        assertNotNull(solution);
-        assertEquals(Map.of(), solution.picked());
-        assertEquals(0, solution.objectiveValue(), DELTA);
+        assertEquals(Status.OPTIMAL, result.status());
+        assertEquals(Map.of(), result.solution().picked());
+        assertEquals(0, result.solution().objectiveValue(), DELTA);
     }
 
     /** Behavior 3. Oracle: known. */
@@ -315,12 +321,12 @@ class OptimizationTest {
         Instance instance = new Instance(List.of(a, b), 2, 4);
 
         // Act
-        Solution solution = new Optimization().run(instance);
+        Result result = new Optimization().run(instance);
 
         // Assert
-        assertNotNull(solution);
-        assertEquals(Map.of("A", 0, "B", 0), solution.picked());
-        assertEquals(0, solution.objectiveValue(), DELTA);
+        assertEquals(Status.OPTIMAL, result.status());
+        assertEquals(Map.of("A", 0, "B", 0), result.solution().picked());
+        assertEquals(0, result.solution().objectiveValue(), DELTA);
     }
 
     /** Behavior 3. Oracle: known, m = floor(min(W / w, V / v)) = floor(min(7 / 2, 10 / 1)) = 3. */
@@ -331,12 +337,12 @@ class OptimizationTest {
         Instance instance = new Instance(List.of(p), 7, 10);
 
         // Act
-        Solution solution = new Optimization().run(instance);
+        Result result = new Optimization().run(instance);
 
         // Assert
-        assertNotNull(solution);
-        assertEquals(Map.of("P", 3), solution.picked());
-        assertEquals(15, solution.objectiveValue(), DELTA);
+        assertEquals(Status.OPTIMAL, result.status());
+        assertEquals(Map.of("P", 3), result.solution().picked());
+        assertEquals(15, result.solution().objectiveValue(), DELTA);
     }
 
     /** Behavior 3. Oracle: known; the unique best load is two pallets of A, worth 20. */
@@ -348,13 +354,13 @@ class OptimizationTest {
         Instance instance = new Instance(List.of(a, b), 4, 5);
 
         // Act
-        Solution solution = new Optimization().run(instance);
+        Result result = new Optimization().run(instance);
 
         // Assert
-        assertNotNull(solution);
-        assertEquals(Map.of("A", 2, "B", 0), solution.picked());
-        assertEquals(4, solution.totalWeight(), DELTA);
-        assertTrue(solution.totalVolume() < 5);
+        assertEquals(Status.OPTIMAL, result.status());
+        assertEquals(Map.of("A", 2, "B", 0), result.solution().picked());
+        assertEquals(4, result.solution().totalWeight(), DELTA);
+        assertTrue(result.solution().totalVolume() < 5);
     }
 
     /** Behavior 3. Oracle: known; the unique best load is two pallets of A, worth 20. */
@@ -366,13 +372,13 @@ class OptimizationTest {
         Instance instance = new Instance(List.of(a, b), 5, 4);
 
         // Act
-        Solution solution = new Optimization().run(instance);
+        Result result = new Optimization().run(instance);
 
         // Assert
-        assertNotNull(solution);
-        assertEquals(Map.of("A", 2, "B", 0), solution.picked());
-        assertEquals(4, solution.totalVolume(), DELTA);
-        assertTrue(solution.totalWeight() < 5);
+        assertEquals(Status.OPTIMAL, result.status());
+        assertEquals(Map.of("A", 2, "B", 0), result.solution().picked());
+        assertEquals(4, result.solution().totalVolume(), DELTA);
+        assertTrue(result.solution().totalWeight() < 5);
     }
 
     /** Behavior 3. Oracle: known; the unique best load is one A and two B, worth 22. */
@@ -384,13 +390,13 @@ class OptimizationTest {
         Instance instance = new Instance(List.of(a, b), 4, 5);
 
         // Act
-        Solution solution = new Optimization().run(instance);
+        Result result = new Optimization().run(instance);
 
         // Assert
-        assertNotNull(solution);
-        assertEquals(Map.of("A", 1, "B", 2), solution.picked());
-        assertEquals(4, solution.totalWeight(), DELTA);
-        assertEquals(5, solution.totalVolume(), DELTA);
+        assertEquals(Status.OPTIMAL, result.status());
+        assertEquals(Map.of("A", 1, "B", 2), result.solution().picked());
+        assertEquals(4, result.solution().totalWeight(), DELTA);
+        assertEquals(5, result.solution().totalVolume(), DELTA);
     }
 
     /** Behavior 3. Oracle: known. Either pallet is optimal, so assert the revenue, never picked. */
@@ -402,11 +408,11 @@ class OptimizationTest {
         Instance instance = new Instance(List.of(a, b), 2, 2);
 
         // Act
-        Solution solution = new Optimization().run(instance);
+        Result result = new Optimization().run(instance);
 
         // Assert
-        assertNotNull(solution);
-        assertEquals(5, solution.objectiveValue(), DELTA);
+        assertEquals(Status.OPTIMAL, result.status());
+        assertEquals(5, result.solution().objectiveValue(), DELTA);
     }
 
     /** Behavior 3. Oracle: known; the rest of the load is the two-pallet answer, one A. */
@@ -419,12 +425,12 @@ class OptimizationTest {
         Instance instance = new Instance(List.of(a, b, heavy), 2, 2);
 
         // Act
-        Solution solution = new Optimization().run(instance);
+        Result result = new Optimization().run(instance);
 
         // Assert
-        assertNotNull(solution);
-        assertEquals(Map.of("A", 1, "B", 0, "H", 0), solution.picked());
-        assertEquals(10, solution.objectiveValue(), DELTA);
+        assertEquals(Status.OPTIMAL, result.status());
+        assertEquals(Map.of("A", 1, "B", 0, "H", 0), result.solution().picked());
+        assertEquals(10, result.solution().objectiveValue(), DELTA);
     }
 
     /** Behavior 5. Oracle: metamorphic relation. */
@@ -440,11 +446,11 @@ class OptimizationTest {
                 instance.volumeCapacity());
 
         // Act
-        Solution first = new Optimization().run(instance);
-        Solution second = new Optimization().run(raised);
+        Result first = new Optimization().run(instance);
+        Result second = new Optimization().run(raised);
 
         // Assert
-        assertTrue(second.objectiveValue() >= first.objectiveValue());
+        assertTrue(second.solution().objectiveValue() >= first.solution().objectiveValue());
     }
 
     /** Behavior 5. Oracle: metamorphic relation. */
@@ -462,57 +468,57 @@ class OptimizationTest {
                 instance.volumeCapacity());
 
         // Act
-        Solution first = new Optimization().run(instance);
-        Solution second = new Optimization().run(raised);
+        Result first = new Optimization().run(instance);
+        Result second = new Optimization().run(raised);
 
         // Assert
-        assertTrue(second.objectiveValue() >= first.objectiveValue());
+        assertTrue(second.solution().objectiveValue() >= first.solution().objectiveValue());
     }
 
     /** Behavior 6. Oracle: metamorphic relation. */
     @Test
     void run_givenAHigherHoldCapacity_doesNotLowerTheRevenue() {
         // Act
-        Solution first = new Optimization().run(threeProducts(5, 4, 0));
-        Solution second = new Optimization().run(threeProducts(5, 6, 0));
+        Result first = new Optimization().run(threeProducts(5, 4, 0));
+        Result second = new Optimization().run(threeProducts(5, 6, 0));
 
         // Assert
-        assertTrue(second.objectiveValue() >= first.objectiveValue());
+        assertTrue(second.solution().objectiveValue() >= first.solution().objectiveValue());
     }
 
     /** Behavior 6. Oracle: metamorphic relation. */
     @Test
     void run_givenACommittedPalletReleased_doesNotLowerTheRevenue() {
         // Act
-        Solution first = new Optimization().run(threeProducts(5, 4, 1));
-        Solution second = new Optimization().run(threeProducts(5, 4, 0));
+        Result first = new Optimization().run(threeProducts(5, 4, 1));
+        Result second = new Optimization().run(threeProducts(5, 4, 0));
 
         // Assert
-        assertTrue(second.objectiveValue() >= first.objectiveValue());
+        assertTrue(second.solution().objectiveValue() >= first.solution().objectiveValue());
     }
 
     /** Behavior 7. Oracle: metamorphic relation. */
     @Test
     void run_givenALowerPayloadCapacity_doesNotRaiseTheRevenue() {
         // Act
-        Solution first = new Optimization().run(threeProducts(5, 4, 0));
-        Solution second = new Optimization().run(threeProducts(4, 4, 0));
+        Result first = new Optimization().run(threeProducts(5, 4, 0));
+        Result second = new Optimization().run(threeProducts(4, 4, 0));
 
         // Assert
-        assertNotNull(second);
-        assertTrue(second.objectiveValue() <= first.objectiveValue());
+        assertEquals(Status.OPTIMAL, second.status());
+        assertTrue(second.solution().objectiveValue() <= first.solution().objectiveValue());
     }
 
     /** Behavior 7. Oracle: metamorphic relation. */
     @Test
     void run_givenALowerHoldCapacity_doesNotRaiseTheRevenue() {
         // Act
-        Solution first = new Optimization().run(threeProducts(5, 4, 0));
-        Solution second = new Optimization().run(threeProducts(5, 3, 0));
+        Result first = new Optimization().run(threeProducts(5, 4, 0));
+        Result second = new Optimization().run(threeProducts(5, 3, 0));
 
         // Assert
-        assertNotNull(second);
-        assertTrue(second.objectiveValue() <= first.objectiveValue());
+        assertEquals(Status.OPTIMAL, second.status());
+        assertTrue(second.solution().objectiveValue() <= first.solution().objectiveValue());
     }
 
     /** Behavior 7. Oracle: metamorphic relation. */
@@ -526,22 +532,22 @@ class OptimizationTest {
                 instance.volumeCapacity());
 
         // Act
-        Solution first = new Optimization().run(instance);
-        Solution second = new Optimization().run(withoutB);
+        Result first = new Optimization().run(instance);
+        Result second = new Optimization().run(withoutB);
 
         // Assert
-        assertTrue(second.objectiveValue() <= first.objectiveValue());
+        assertTrue(second.solution().objectiveValue() <= first.solution().objectiveValue());
     }
 
     /** Behavior 7. Oracle: metamorphic relation. */
     @Test
     void run_givenOneMoreCommittedPallet_doesNotRaiseTheRevenue() {
         // Act
-        Solution first = new Optimization().run(threeProducts(5, 4, 0));
-        Solution second = new Optimization().run(threeProducts(5, 4, 1));
+        Result first = new Optimization().run(threeProducts(5, 4, 0));
+        Result second = new Optimization().run(threeProducts(5, 4, 1));
 
         // Assert
-        assertNotNull(second);
-        assertTrue(second.objectiveValue() <= first.objectiveValue());
+        assertEquals(Status.OPTIMAL, second.status());
+        assertTrue(second.solution().objectiveValue() <= first.solution().objectiveValue());
     }
 }

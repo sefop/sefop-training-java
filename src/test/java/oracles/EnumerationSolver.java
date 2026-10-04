@@ -18,23 +18,28 @@ class EnumerationSolver {
     private Solution best;
 
     /**
-     * Returns the load with the most revenue, or {@code null} when no load respects both capacities.
+     * Returns the load with the most revenue and the status {@code OPTIMAL}, or the status {@code INFEASIBLE}.
      *
-     * <p>Same contract as {@link Optimization#run(Instance)}. Product i can load at most
+     * <p>Same contract as {@link Optimization#run(Instance)}. Trying every candidate load is a proof, so the
+     * status is {@code OPTIMAL} when a load respects both capacities and {@code INFEASIBLE} when none does, and
+     * never {@code FEASIBLE} or {@code NOT_FOUND}. Product i can load at most
      * m_i = floor(min(W / w_i, V / v_i)) pallets, and at least its committed pallets, so the candidate loads are
      * every combination of counts between those two bounds.
      *
-     * @throws IllegalArgumentException if {@code instance} is null.
+     * @throws InvalidInstanceException if {@code instance} is null.
      */
-    Solution run(Instance instance) {
+    Result run(Instance instance) {
         if (instance == null) {
-            throw new IllegalArgumentException("instance must not be null");
+            throw new InvalidInstanceException("instance must not be null");
         }
         this.instance = instance;
         this.counts = new int[instance.products().size()];
         this.best = null;
         tryCounts(0);
-        return best;
+        if (best == null) {
+            return new Result(Status.INFEASIBLE, null);
+        }
+        return new Result(Status.OPTIMAL, best);
     }
 
     /** Tries every count for product {@code index} onward, the earlier counts being fixed. */
