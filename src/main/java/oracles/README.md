@@ -10,12 +10,17 @@ This page only covers what's specific to Java.
 
 - [`Optimization.java`](Optimization.java) is the code under test: the cargo loading model of the book, solved
   with OR-Tools. It's complete: you only write tests (and one pseudo-oracle). `new Optimization().run(instance)`
-  returns the load with the most revenue, or `null` when no load respects both capacities. Its Javadoc is the
-  contract, with the seven promises numbered as in the book.
-- [`Product.java`](Product.java), [`Instance.java`](Instance.java) and [`Solution.java`](Solution.java) are the
-  records it works with.
+  returns a `Result`: a `status()` (`Status.OPTIMAL`, `FEASIBLE`, `INFEASIBLE` or `NOT_FOUND`) and, when the
+  status is `OPTIMAL` or `FEASIBLE`, a `solution()` holding the load. This implementation solves the model to
+  proven optimality, so you will meet `OPTIMAL` when a load respects both capacities and `INFEASIBLE` when none
+  does. Its Javadoc is the contract, with the seven promises numbered as in the book. The contract itself is
+  defined in the design section, in
+  [Contracts](https://github.com/sefop/sefop-training-hub/blob/main/book/04-design/README.md#ch-contracts).
+- [`Product.java`](Product.java), [`Instance.java`](Instance.java), [`Solution.java`](Solution.java),
+  [`Result.java`](Result.java) and [`Status.java`](Status.java) are the records and the enum it works with.
 - [`EnumerationSolver.java`](../../../test/java/oracles/EnumerationSolver.java) is a pseudo-oracle waiting to be
-  written: a second implementation of the same contract that tries every candidate load.
+  written: a second implementation of the same contract that tries every candidate load, so it returns
+  `OPTIMAL` or `INFEASIBLE` and nothing else.
 - [`OptimizationTest.java`](../../../test/java/oracles/OptimizationTest.java) holds:
   - the book's three tests, finished, one per oracle: the two-pallet test (known oracle), the differential
     sweep (pseudo-oracle) and the capacity relation test (metamorphic relation). The sweep is disabled until
@@ -27,7 +32,7 @@ This page only covers what's specific to Java.
 
 ## Part 1: one test per promise
 
-1. Write `assertValidSolution(instance, solution)`: every committed pallet is loaded, both capacities hold, and
+1. Write `assertValidSolution(instance, solution)`, which takes the `solution()` of a `Result`: every committed pallet is loaded, both capacities hold, and
    the reported revenue and totals match the load. Unlike Python, there is no "whole number of pallets" check
    to write: `picked` holds `Integer` values, so the type already guarantees it.
 2. For each empty test in Part 1, write the body with the Arrange / Act / Assert layout of the finished tests,
@@ -74,7 +79,7 @@ solver. You only need to read `Optimization.java`, not change it, but these are 
 | $x_i \in \mathbb{Z}$, $x_i \ge l_i$ | `solver.makeIntVar(lowerBound, MPSolver.infinity(), name)` |
 | $\sum_i w_i x_i \le W$ | `solver.makeConstraint(Double.NEGATIVE_INFINITY, capacity, name)`, then `setCoefficient(x, w)` |
 | $\max \sum_i r_i x_i$ | `solver.objective().setCoefficient(x, r)`, then `setMaximization()` |
-| solve, and check a load was found | `solver.solve() == MPSolver.ResultStatus.OPTIMAL` |
+| solve, and read what was established | `solver.solve()` returns `OPTIMAL`, `FEASIBLE`, `INFEASIBLE` or `NOT_SOLVED` |
 | the value of $x_i$ | `variable.solutionValue()` |
 
 Two things catch people out:
